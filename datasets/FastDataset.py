@@ -1,0 +1,97 @@
+import PIL
+from sklearn.preprocessing import LabelEncoder
+from torch.utils.data import Dataset
+from torchvision import transforms as tf
+
+class FastDataset(Dataset):
+    def __init__(self, files, mode='train',
+                 transform=None,
+                 image_shape=(200, 200)):
+
+        """
+        mode - train/valid/test
+        files - list with paths to files
+        transform - processing of file
+        image_shape - shape of result tensor
+        """
+
+        self.mode = mode
+        self.image_shape = image_shape
+        self.transform = transform if transform \
+            else tf.Compose([tf.Resize(image_shape), tf.PILToTensor()])
+        self.x = []
+        self.y = []
+
+        self.check_mode = self.mode in ('train', 'valid')
+
+        labels = list(set([self.get_label(filename) for filename in files]))
+        self.le = LabelEncoder()
+        self.le.fit(labels)
+
+        # Saving tensors from PIL.Image
+        for path in files:
+            label = path.split('/')[-2]
+            tensor = self.get_sample(path)
+            self.x.append(tensor / 255)
+            self.y.append(label)
+
+        self._len = len(self.x)
+
+    def get_sample(self, filepath):
+        with PIL.Image.open(filepath) as image:
+            image = PIL.Image.open(filepath)
+            tensor = self.transform(image)
+        return tensor
+
+    def __len__(self):
+        return self._len
+
+    def __getitem__(self, idx):
+        '''
+        Returns Tensor, str (optional)
+        '''
+        if self.check_mode:
+            y = self.le.transform([self.y[idx]])
+            return self.x[idx], y[0]
+        else:
+            return self.x[idx]
+
+    def decode(self, num_label):
+        return self.le.inverse_transform([num_label])[0]
+
+    def train_valid_split(self, train_size=0.9):
+        '''
+        Unfirom split of files.
+
+        Returns two datasets: train_dataset and valid_dataset
+        '''
+
+        def handle_one_class(label):
+            file_list = get_class_samples(label)
+            train_set, valid_set = train_test_split(tuple(file_list),
+                                                    train_size=train_size)
+            return train_set, valid_set
+
+        def get_class_samples(label):
+            return set([filename
+                        for filename in self.files if label in filename.split('/')])
+
+        train_list = []
+        valid_list = []
+        labels = self.le.classes_
+
+        for label in labels:
+            cur_train_list, cur_valid_list = handle_one_class(label)
+            train_list.extend(cur_train_list)
+            valid_list.extend(cur_valid_list)
+
+        train_ds = FastDataset(mode='train',
+                               labels=labels,
+                               image_shape=self.image_shape,
+                               files=train_list)
+
+        valid_ds = FastDataset(mode='valid',
+                               labels=labels,
+                               image_shape=self.image_shape,
+                               files=valid_list)
+        return train_ds, valid_ds
