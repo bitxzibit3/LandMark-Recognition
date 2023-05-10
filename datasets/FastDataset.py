@@ -1,7 +1,10 @@
 import PIL
+
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset
 from torchvision import transforms as tf
+
 
 class FastDataset(Dataset):
     def __init__(self, files, mode='train',
@@ -47,9 +50,9 @@ class FastDataset(Dataset):
         return self._len
 
     def __getitem__(self, idx):
-        '''
+        """
         Returns Tensor, str (optional)
-        '''
+        """
         if self.check_mode:
             y = self.le.transform([self.y[idx]])
             return self.x[idx], y[0]
@@ -60,11 +63,11 @@ class FastDataset(Dataset):
         return self.le.inverse_transform([num_label])[0]
 
     def train_valid_split(self, train_size=0.9):
-        '''
-        Unfirom split of files.
+        """
+        Uniform split of files.
 
         Returns two datasets: train_dataset and valid_dataset
-        '''
+        """
 
         def handle_one_class(label):
             file_list = get_class_samples(label)
@@ -86,12 +89,10 @@ class FastDataset(Dataset):
             valid_list.extend(cur_valid_list)
 
         train_ds = FastDataset(mode='train',
-                               labels=labels,
                                image_shape=self.image_shape,
                                files=train_list)
 
         valid_ds = FastDataset(mode='valid',
-                               labels=labels,
                                image_shape=self.image_shape,
                                files=valid_list)
         return train_ds, valid_ds

@@ -20,6 +20,7 @@ def train_valid(model, train_dl, valid_dl,
     metric_fn - metric function to evaluate model
     max_epochs - epochs to training and validation
     scheduler_cls - class of scheduler
+    scheduler_params - parameters for scheduler
     """
     train_losses = []
     valid_losses = []

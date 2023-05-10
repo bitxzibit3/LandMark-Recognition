@@ -1,4 +1,5 @@
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,7 +96,7 @@ class AdvancedCustomDataset(Dataset):
             tensor = augmentations(image=tensor)['image']
 
         tensor = tensor / 255
-        tensor = Ap.ToTensorV2()(image = tensor)['image'].float()
+        tensor = ToTensorV2()(image=tensor)['image'].float()
 
         if self.check_mode:
             label = self.get_label(filename)

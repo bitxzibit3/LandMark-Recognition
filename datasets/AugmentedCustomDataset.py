@@ -114,11 +114,11 @@ class AugmentedCustomDataset(Dataset):
             plt.imshow(sample.permute(1, 2, 0))
 
     def train_valid_split(self, train_size=0.9):
-        '''
+        """
         Unfirom split of files.
 
         Returns two datasets: train_dataset and valid_dataset (augmentations = [None])
-        '''
+        """
 
         def handle_one_class(label):
             file_list = get_class_samples(label)

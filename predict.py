@@ -43,13 +43,14 @@ def build_model(net: str):
                                        out_features=1024)
         net.classifier[-1] = nn.Linear(in_features=1024,
                                        out_features=210)
-        print('VGG13 not on computer, downloading state dict...')
-        url = 'https://api.wandb.ai/artifactsV2/gcp-us/ml_landmarks/QXJ0aWZhY3Q6NDQ2NzIyODM3' \
-              '/088752866cd6ebfca343024efd297925/state_dict.pth'
-        path = './models/vgg13.pth'
-        r = requests.get(url)
-        with open(path, 'wb') as f:
-            f.write(r.content)
+        if not os.path.exists('./models/vgg13.pth'):
+            print('VGG13 not on computer, downloading state dict...')
+            url = 'https://api.wandb.ai/artifactsV2/gcp-us/ml_landmarks/QXJ0aWZhY3Q6NDQ2NzIyODM3' \
+                  '/088752866cd6ebfca343024efd297925/state_dict.pth'
+            path = './models/vgg13.pth'
+            r = requests.get(url)
+            with open(path, 'wb') as f:
+                f.write(r.content)
         net.load_state_dict(torch.load('./models/vgg13.pth'))
         tf = A.Resize(224, 224)
     else:
