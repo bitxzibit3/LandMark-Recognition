@@ -16,6 +16,8 @@ def parse_args():
                         help='Path to image to predict.')
     parser.add_argument('net', type=str,
                         help='Model to use to predict. Available models: mynet, vgg13')
+    parser.add_argument('--device', type=str, default='cpu',
+                        help='Device to save neural net. Possible options: cpu, cuda')
 
     return parser.parse_args()
 
@@ -75,17 +77,25 @@ def decode(answer):
     with open('./data/classes.txt', 'r') as f:
         labels = f.read()
     labels = labels.split('\n')
-    print(labels[idx])
+    return labels[idx]
 
 
 def main():
     args = parse_args()
-    path, model = args.image_path, args.net
+    path, model, device = args.image_path, args.net, args.device.lower()
+    if not torch.cuda.is_available() and device == 'cuda':
+        print('GPU is not available! Auto switch to CPU...')
+        device = 'cpu'
+    elif device not in ('cpu', 'cuda'):
+        print('Incorrect type of device! Auto switch to CPU...')
+        device = 'cpu'
     model, tf = build_model(model)
     tensor = open_image(path, tf)
+    model.to(device)
+    tensor = tensor.to(device)
     model.eval()
     answer = model(tensor)
-    decode(answer)
+    print(decode(answer))
 
 
 if __name__ == '__main__':
