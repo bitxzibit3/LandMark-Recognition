@@ -26,8 +26,8 @@ class FastDataset(Dataset):
         self.y = []
 
         self.check_mode = self.mode in ('train', 'valid')
-
-        labels = list(set([self.get_label(filename) for filename in files]))
+        get_label = lambda x: x.split('/')[-2]
+        labels = list(set([get_label(filename) for filename in files]))
         self.le = LabelEncoder()
         self.le.fit(labels)
 
@@ -55,29 +55,32 @@ class FastDataset(Dataset):
         """
         if self.check_mode:
             y = self.le.transform([self.y[idx]])
-            return self.x[idx], y[0]
+            return self.x[idx].float(), y[0]
         else:
-            return self.x[idx]
+            return self.x[idx].float()
 
     def decode(self, num_label):
         return self.le.inverse_transform([num_label])[0]
 
-    def train_valid_split(self, train_size=0.9):
+    def train_valid_split(self, train_size=0.9): # REJECTED
         """
         Uniform split of files.
 
         Returns two datasets: train_dataset and valid_dataset
         """
 
-        def handle_one_class(label):
-            file_list = get_class_samples(label)
-            train_set, valid_set = train_test_split(tuple(file_list),
+        assert self.check_mode, 'Test can not be splitted'
+        dictionary = {}
+        for x, y in self:
+            if y not in dictionary:
+                dictionary[y] = [x]
+            else:
+                dictionary[y].append(x)
+
+        def handle_one_class(objects):
+            train_set, valid_set = train_test_split(tuple(objects),
                                                     train_size=train_size)
             return train_set, valid_set
-
-        def get_class_samples(label):
-            return set([filename
-                        for filename in self.files if label in filename.split('/')])
 
         train_list = []
         valid_list = []

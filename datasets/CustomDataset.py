@@ -23,7 +23,7 @@ class CustomDataset(Dataset):
         self.image_shape = image_shape
         self.files = files
 
-        self.check_mode = self.mode in ('train', 'test')
+        self.check_mode = self.mode in ('train', 'valid')
 
         labels = list(set([self.get_label(filename) for filename in files]))
         self.le = LabelEncoder()
@@ -50,16 +50,18 @@ class CustomDataset(Dataset):
             else:
                 tensor = self.default_transform(img)
 
+        tensor = tensor / 255
+        tensor = tensor.float()
+
         if self.check_mode:
-            label = self.get_label(idx)
+            label = self.get_label(path)
             return tensor, self.le.transform([label])[0]
         else:
             return tensor
 
-    def get_label(self, idx):
+    def get_label(self, path):
         assert self.check_mode, \
             'It is not possible to get label'
-        path = self.files[idx]
         return path.split('/')[2]
 
     def decode(self, num_label):
